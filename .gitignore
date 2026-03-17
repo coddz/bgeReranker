@@ -1,0 +1,11 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Local tooling artifacts
+.omc/
+.waylog/
+
+# Local/invalid artifacts
+nul
+=*
