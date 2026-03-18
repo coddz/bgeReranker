@@ -1,5 +1,5 @@
 @echo off
-REM 生产级安装检查和依赖设置
+REM Production installation checks and dependency setup
 
 setlocal
 
@@ -7,20 +7,37 @@ echo ========================================
 echo  BGE Reranker Production Setup
 echo ========================================
 
-REM 激活环境 
+REM Activate conda environment
 echo Activating conda environment...
-call conda activate openclaw
+set "ACTIVATE_BAT="
+if exist "%USERPROFILE%\Anaconda3\Scripts\activate.bat" (
+    set "ACTIVATE_BAT=%USERPROFILE%\Anaconda3\Scripts\activate.bat"
+)
+if not defined ACTIVATE_BAT if exist "F:\Working\anaconda3\Scripts\activate.bat" (
+    set "ACTIVATE_BAT=F:\Working\anaconda3\Scripts\activate.bat"
+)
+if not defined ACTIVATE_BAT (
+    echo Error: Could not find conda activate.bat
+    echo Checked %USERPROFILE%\Anaconda3\Scripts\activate.bat
+    echo Checked F:\Working\anaconda3\Scripts\activate.bat
+    exit /b 1
+)
+
+call "%ACTIVATE_BAT%" openclaw
 if errorlevel 1 (
     echo Error: Failed to activate conda environment 'openclaw'
     echo Please ensure the environment exists and conda is properly installed
     exit /b 1
 )
 
-REM 检查并安装所需包
+REM Set environment variable to handle OpenMP conflicts
+set KMP_DUPLICATE_LIB_OK=TRUE
+
+REM Check and install required packages
 echo.
 echo Checking dependencies...
 
-REM 检查 torch
+REM Check torch
 python -c "import torch" >nul 2>&1
 if errorlevel 1 (
     echo Installing PyTorch with CUDA support...
@@ -29,7 +46,7 @@ if errorlevel 1 (
     echo PyTorch already installed
 )
 
-REM 检查 FlagEmbedding
+REM Check FlagEmbedding
 python -c "import FlagEmbedding" >nul 2>&1
 if errorlevel 1 (
     echo Installing FlagEmbedding...
@@ -38,7 +55,7 @@ if errorlevel 1 (
     echo FlagEmbedding already installed
 )
 
-REM 检查其他依赖
+REM Check other dependencies
 python -c "import fastapi" >nul 2>&1
 if errorlevel 1 (
     echo Installing FastAPI...
@@ -51,12 +68,13 @@ if errorlevel 1 (
     pip install "uvicorn[standard]>=0.24.0"
 )
 
-REM 完成消息
+REM Completion message
 echo.
 echo ========================================
 echo  Installation completed successfully!
 echo ========================================
 echo.
+echo KMP Duplicate Lib OK: %KMP_DUPLICATE_LIB_OK%
 echo To start the PRODUCTION server:
 echo   Double-click run_api_production.bat
 echo.

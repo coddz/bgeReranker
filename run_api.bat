@@ -2,10 +2,22 @@
 REM Batch script to run the BGE Reranker API in the openclaw conda environment
 
 echo Ensuring conda is initialized and activating environment: openclaw
-call "%USERPROFILE%\Anaconda3\Scripts\activate.bat" openclaw
-if errorlevel 1 (
-    call "F:\Working\anaconda3\Scripts\activate.bat" openclaw
+set "ACTIVATE_BAT="
+if exist "%USERPROFILE%\Anaconda3\Scripts\activate.bat" (
+    set "ACTIVATE_BAT=%USERPROFILE%\Anaconda3\Scripts\activate.bat"
 )
+if not defined ACTIVATE_BAT if exist "F:\Working\anaconda3\Scripts\activate.bat" (
+    set "ACTIVATE_BAT=F:\Working\anaconda3\Scripts\activate.bat"
+)
+if not defined ACTIVATE_BAT (
+    echo Error: Could not find conda activate.bat
+    echo Checked %USERPROFILE%\Anaconda3\Scripts\activate.bat
+    echo Checked F:\Working\anaconda3\Scripts\activate.bat
+    pause
+    exit /b 1
+)
+
+call "%ACTIVATE_BAT%" openclaw
 
 if errorlevel 1 (
     echo Failed to activate conda environment. Please make sure the openclaw environment exists.
@@ -35,6 +47,7 @@ if errorlevel 1 (
 
 echo Starting BGE Reranker API server on port 8000...
 echo Visit http://localhost:8000/docs for API documentation
+echo KMP Duplicate Lib OK: %KMP_DUPLICATE_LIB_OK%
 python bgeReranker_API.py
 
 pause

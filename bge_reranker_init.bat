@@ -1,14 +1,18 @@
 @echo off
-REM BGE Reranker 模型下载初始化脚本
-REM 自动配置环境并下载模型到指定目录
+REM BGE Reranker model initialization script
+REM Configure environment and download the model to the target directory
 
-REM 配置环境变量
+REM Environment variables
 set HF_HOME=F:\openclaw_models\extModels
 set USE_FP16=true
 
-REM 激活conda环境
+REM Activate conda environment
 echo Activating conda environment: openclaw
-call conda activate openclaw
+call "%USERPROFILE%\Anaconda3\Scripts\activate.bat" openclaw
+if errorlevel 1 (
+    call "F:\Working\anaconda3\Scripts\activate.bat" openclaw
+)
+
 if errorlevel 1 (
     echo ERROR: Failed to activate conda environment 'openclaw'
     echo Please make sure conda is installed and the environment exists
@@ -30,7 +34,7 @@ echo.
 
 pause
 
-REM 运行模型下载脚本
+REM Run model download script
 echo Starting model download...
 python bgeReranker_init_enhanced.py
 

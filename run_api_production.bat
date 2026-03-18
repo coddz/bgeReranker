@@ -1,5 +1,5 @@
 @echo off
-REM BGE Reranker API Production 启动脚本 - 生产级安全配置
+REM BGE Reranker API Production startup script
 
 echo.
 echo ========================================
@@ -7,28 +7,45 @@ echo  BGE Reranker API Production Server
 echo ========================================
 echo.
 
-REM 设置生产环境变量
+REM Production environment variables
 set HOST=0.0.0.0
 set PORT=8000
 set MAX_DOCUMENTS=200
 set MAX_DOC_LENGTH=4096
 set MAX_QUERY_LENGTH=1024
-set BATCH_SIZE=16  REM 减少批处理大小以降低单请求内存消耗
+set BATCH_SIZE=16
 set USE_FP16=true
 set ENABLE_CORS=true
-set CUDA_CLEAR_CACHE=true  REM 启用CUDA缓存清理，在持续负载下管理内存
+set CUDA_CLEAR_CACHE=true
+set KMP_DUPLICATE_LIB_OK=TRUE
 
-REM 重要：限制并发和超时参数以确保稳定性
-set MAX_CONCURRENT_REQUESTS=8  REM 根据服务器性能进行调整
-set PROCESSING_TIMEOUT=90  REM 为长文档增加超时
+REM Stability limits
+set MAX_CONCURRENT_REQUESTS=8
+set PROCESSING_TIMEOUT=90
 
-REM 设置模型存储路径 (可通过 HF_HOME 自定义)
+REM Model cache path (override via HF_HOME if needed)
 if not defined HF_HOME (
     set HF_HOME=F:\openclaw_models\extModels
 )
 
-REM 检查环境
-call conda activate openclaw
+REM Activate conda environment
+set "ACTIVATE_BAT="
+if exist "%USERPROFILE%\Anaconda3\Scripts\activate.bat" (
+    set "ACTIVATE_BAT=%USERPROFILE%\Anaconda3\Scripts\activate.bat"
+)
+if not defined ACTIVATE_BAT if exist "F:\Working\anaconda3\Scripts\activate.bat" (
+    set "ACTIVATE_BAT=F:\Working\anaconda3\Scripts\activate.bat"
+)
+if not defined ACTIVATE_BAT (
+    echo Error: Could not find conda activate.bat
+    echo Checked %USERPROFILE%\Anaconda3\Scripts\activate.bat
+    echo Checked F:\Working\anaconda3\Scripts\activate.bat
+    pause
+    exit /b 1
+)
+
+call "%ACTIVATE_BAT%" openclaw
+
 if errorlevel 1 (
     echo Error: Failed to activate conda environment 'openclaw'
     echo Please check if the environment exists and conda is properly installed
@@ -36,7 +53,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM 验证依赖
+REM Validate dependencies
 echo Checking required packages...
 python -c "import torch" >nul 2>&1
 if errorlevel 1 (
@@ -61,13 +78,13 @@ echo   Max Query Length: %MAX_QUERY_LENGTH%
 echo   Batch Size: %BATCH_SIZE%
 echo   Use FP16: %USE_FP16%
 echo   CUDA Cache Clear: %CUDA_CLEAR_CACHE%
+echo   KMP Duplicate Lib OK: %KMP_DUPLICATE_LIB_OK%
 echo   Model Cache: %HF_HOME%
 echo.
 
-REM 设置 HF_HOME
 set HF_HOME=%HF_HOME%
 
-REM 运行生产级API
+REM Run production API
 echo Starting Production BGE Reranker API server...
 python bgeReranker_API_production.py
 
